@@ -1,4 +1,4 @@
-# Your Prompt Is Your Result: Pipeline Artifacts in Metacognitive Evaluation
+# Your Prompt Is Your Result: How Pipeline Choices Manufacture Metacognitive Evaluation Findings
 
 This repository contains the code and data for the paper:
 
