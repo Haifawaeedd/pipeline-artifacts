@@ -22,7 +22,8 @@ paper/
 └── fig2_calibration_gap.png          # Figure 2
 scripts/
 ├── generate_figures.py               # Reproduce all figures
-└── bootstrap_kappa.py                # Bootstrap CIs on Cohen's kappa
+├── bootstrap_kappa.py                # Bootstrap CIs on Cohen's kappa
+└── rule_agreement_check.py           # Control diagnostic: Cohen's kappa between rule-implied and model-chosen action
 data/
 ├── protocol_A0_GPT.csv               # Protocol A0, GPT-4.1-mini (N=1000)
 ├── protocol_A0_Llama.csv             # Protocol A0, Llama-3.3-70b (N=1000)
@@ -55,7 +56,7 @@ README.md
 ## Reproducing the Results
 
 ```bash
-pip install openai together scipy numpy matplotlib pandas
+pip install openai together scipy numpy matplotlib pandas scikit-learn
 ```
 
 To reproduce figures from the data files:
@@ -96,4 +97,12 @@ We use [PubMedQA](https://pubmedqa.github.io/) (MIT License).
 
 ## Notes on API Keys
 
-All notebooks have been sanitized. Replace `YOUR_OPENAI_API_KEY`, `YOUR_TOGETHER_API_KEY`, and `YOUR_GEMINI_API_KEY` with your own keys before running.
+All notebooks read API keys from environment variables. Set the following before running:
+
+```bash
+export OPENAI_API_KEY="sk-proj-..."
+export TOGETHER_API_KEY="tgp_v1_..."
+export GEMINI_API_KEY="AIza..."
+```
+
+No keys are hardcoded in any notebook.
