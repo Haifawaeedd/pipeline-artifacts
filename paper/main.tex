@@ -150,7 +150,7 @@ And Protocol A2 to Protocol B (threshold table removed):
     \item ABSTAIN rate: 6.0\% $\rightarrow$ 9.7\% ($+3.7$ pp)
 \end{itemize}
 
-The full abstention-rate drop from A1 to B is therefore driven predominantly by the evidence-length and sample-composition change ($-28.7$ pp), which explains 88\% ($28.7 / (28.7 + 3.7)$) of the shift. We cannot separate these two factors, since A1 and A2 differ in both. The threshold table removal actually slightly increases abstention ($+3.7$ pp). The evidence-length effect is captured in the accuracy and INCONCLUSIVE-rate improvements (Table~\ref{tab:main_results}), but the threshold table maps monitoring output to actions deterministically regardless of evidence quality. The action distribution that our original pipeline attributed to model behavior was predominantly a consequence of evidence truncation, mediated by the supplied threshold rule: shorter evidence raised declared error probabilities, and the rule mechanically converted those into ABSTAIN.
+The full abstention-rate drop from A1 to B is therefore driven predominantly by the evidence-length and sample-composition change ($-28.7$ pp), which explains 88\% ($28.7 / (28.7 + 3.7)$) of the shift. We cannot separate these two factors, since A1 and A2 differ in both. The threshold table removal actually slightly increases abstention ($+3.7$ pp). The action distribution that our original pipeline attributed to model behavior was predominantly a consequence of evidence truncation, mediated by the supplied threshold rule: shorter evidence raised declared error probabilities, and the rule mechanically converted those into ABSTAIN.
 
 \begin{table}[h]
 \centering
@@ -275,7 +275,7 @@ Based on the five findings above, we propose the following six fields that shoul
 
 \section{Discussion}
 
-\paragraph{The threshold table as a homogenizer.} The most counterintuitive finding is that the threshold table does not merely create a tautology---it also homogenizes models. With the table, both GPT and Llama achieve $\kappa = 1.000$. Without it, they diverge to $\kappa = 0.860$ and $\kappa = 0.406$ respectively. A pipeline that supplies the action rule is not measuring two different models' control policies---it is measuring whether both models can follow the same instruction, which they can.
+\paragraph{The threshold table as a homogenizer.} The most counterintuitive finding is that the threshold table does not merely create a tautology---it also homogenizes models. With the table, both GPT and Llama achieve $\kappa = 1.000$ in A2 (GPT shows a single deviation in A1, $\kappa = 0.998$). Without it, they diverge to $\kappa = 0.860$ and $\kappa = 0.406$ respectively. A pipeline that supplies the action rule is not measuring two different models' control policies---it is measuring whether both models can follow the same instruction, which they can.
 
 \paragraph{A general principle.} When a prompt supplies an explicit mapping between two measured variables, one variable collapses into a deterministic function of the other and ceases to be an independent measurement. This principle applies beyond the specific pipeline studied here: any evaluation that provides the model with a scoring rubric, a decision rule, or a threshold table during inference should verify that the downstream metric still captures variance attributable to the model rather than to the supplied rule.
 
