@@ -98,20 +98,20 @@ The A0 $\rightarrow$ A1 comparison isolates the token limit. The A1 $\rightarrow
 \toprule
 \textbf{Protocol} & \textbf{Model} & \textbf{N} & \textbf{Acc.} & \textbf{INC\%} & \textbf{Baseline} & \textbf{COMMIT\%} & \textbf{ABSTAIN\%} & \textbf{SEEK\%} \\
 \midrule
-\multirow{2}{*}{A0 (orig.)} & GPT-4.1-mini & 1000 & 0.462 & 47.7\% & 0.552 & 52.2\% & 47.7\% & 0.1\% \\
-& Llama-3.3-70b & 1000 & 0.247 & 78.9\% & 0.552 & 21.1\% & 78.9\% & 0.0\% \\
+\multirow{2}{*}{A0 (orig.)} & GPT-4.1-mini & 1000 & 0.462 & 47.7\% & 0.552 & 82.2\% & 17.8\% & 0.0\% \\
+& Llama-3.3-70b & 1000 & 0.247 & 78.9\% & 0.552 & 91.4\% & 8.6\% & 0.0\% \\
 \midrule
 \multirow{2}{*}{A1 (tokens)} & GPT-4.1-mini & 1000 & 0.512 & 42.1\% & 0.552 & 65.1\% & 34.7\% & 0.2\% \\
-& Llama-3.3-70b & 1000 & 0.631 & 21.2\% & 0.552 & 78.7\% & 21.2\% & 0.1\% \\
+& Llama-3.3-70b & 1000 & 0.631 & 21.2\% & 0.552 & 78.2\% & 0.7\% & 21.1\% \\
 \midrule
 \multirow{2}{*}{A2 (evid.)} & GPT-4.1-mini & 300 & 0.590 & 15.0\% & 0.333 & 94.0\% & 6.0\% & 0.0\% \\
-& Llama-3.3-70b & 300 & 0.567 & 10.7\% & 0.333 & 88.0\% & 2.0\% & 10.0\% \\
+& Llama-3.3-70b & 300 & 0.567 & 10.7\% & 0.333 & 88.3\% & 2.0\% & 9.7\% \\
 \midrule
 \multirow{2}{*}{B (no thr.)} & GPT-4.1-mini & 300 & 0.600 & 14.3\% & 0.333 & 88.3\% & 9.7\% & 2.0\% \\
-& Llama-3.3-70b & 300 & 0.577 & 10.0\% & 0.333 & 71.0\% & 0.0\% & 29.0\% \\
+& Llama-3.3-70b & 300 & 0.577 & 10.0\% & 0.333 & 70.7\% & 0.0\% & 29.3\% \\
 \bottomrule
 \end{tabular}
-\caption{Accuracy, INCONCLUSIVE prediction rate, majority-class baseline, and action distribution across protocols. A0/A1 use a natural sample ($N=1000$); A2/B use a stratified sample ($N=300$). The parser returned a value for every response; however, under A0 truncation it returned the INCONCLUSIVE default rather than a parsed decision. We report this as a silent default, not a parse success.}
+\caption{Accuracy, INCONCLUSIVE prediction rate, majority-class baseline, and action distribution across protocols. A0/A1 use a natural sample ($N=1000$); A2/B use a stratified sample ($N=300$). The parser returned a value for every response; however, under A0 truncation it returned the INCONCLUSIVE default rather than a parsed decision. We report this as a silent default, not a parse success. Under A0, the ACTION field appears after DECISION in the output format; where truncation prevented a parsed decision, the action is likewise a parser default. A0 action percentages should be read as pipeline output, not model behavior.}
 \label{tab:main_results}
 \end{table*}
 
@@ -120,7 +120,7 @@ The A0 $\rightarrow$ A1 comparison isolates the token limit. The A1 $\rightarrow
 \subsection{Finding 1: \texttt{max\_tokens=80} Suppressed Llama Accuracy by 38 Points}
 \label{sec:truncation}
 
-Table \ref{tab:main_results} reports accuracy and parse statistics across protocols. Llama-3.3-70b accuracy rises from 0.247 (Protocol A0) to 0.631 (Protocol A1), a difference of 38.4 percentage points. The mechanism is straightforward: at \texttt{max\_tokens=80}, Llama frequently begins responses with a reasoning preamble before stating DECISION:, causing truncation before the parseable content. The parser then returns the default label INCONCLUSIVE, inflating that class to 78.9\% in A0. This is a silent default assignment, not a measured parse failure (the parser successfully returned a result, but the result was an artifact of truncation).
+Table \ref{tab:main_results} reports accuracy, INCONCLUSIVE rate, and action distribution across protocols. Llama-3.3-70b accuracy rises from 0.247 (Protocol A0) to 0.631 (Protocol A1), a difference of 38.4 percentage points. The mechanism is straightforward: at \texttt{max\_tokens=80}, Llama frequently begins responses with a reasoning preamble before stating DECISION:, causing truncation before the parseable content. The parser then returns the default label INCONCLUSIVE, inflating that class to 78.9\% in A0. This is a silent default assignment, not a measured parse failure (the parser successfully returned a result, but the result was an artifact of truncation).
 
 GPT-4.1-mini shows a smaller but consistent improvement (0.462 $\rightarrow$ 0.512), suggesting it more reliably front-loads the structured output. In A1, GPT-4.1-mini (0.512) remains below the majority-class baseline (0.552) while Llama-3.3-70b (0.631) exceeds it.
 
@@ -279,7 +279,7 @@ Based on the five findings above, we propose the following six fields that shoul
 
 \paragraph{A general principle.} When a prompt supplies an explicit mapping between two measured variables, one variable collapses into a deterministic function of the other and ceases to be an independent measurement. This principle applies beyond the specific pipeline studied here: any evaluation that provides the model with a scoring rubric, a decision rule, or a threshold table during inference should verify that the downstream metric still captures variance attributable to the model rather than to the supplied rule.
 
-\paragraph{Monitoring is stable; control is malleable.} The calibration gap ($\approx +0.25$ for GPT across all variants) suggests that the monitoring stage reflects a relatively stable model property. The control stage, by contrast, shifts by 28.7 percentage points in response to a single preprocessing change (evidence length and sample stratification combined). Researchers who report only control-stage metrics without isolating the monitoring stage may be measuring prompt sensitivity rather than model capability.
+\paragraph{Monitoring is stable; control is malleable.} The calibration gap ($\approx +0.25$ for GPT across all variants) suggests that the monitoring stage reflects a relatively stable model property. The control stage, by contrast, shifts by 28.7 percentage points in response to a preprocessing change (evidence length and sample stratification combined). Researchers who report only control-stage metrics without isolating the monitoring stage may be measuring prompt sensitivity rather than model capability.
 
 \section{Limitations}
 
