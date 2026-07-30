@@ -21,7 +21,7 @@
 \maketitle
 
 \begin{abstract}
-We report five empirical findings that emerged from diagnosing our own prior evaluation pipeline for LLM metacognition on biomedical claim verification (PubMedQA). The two most consequential findings are: (1) truncating the generation limit to \texttt{max\_tokens=80} artificially suppressed Llama-3.3-70b accuracy by 38 percentage points (0.247 $\rightarrow$ 0.631), and (2) supplying an explicit action-mapping table in the prompt drives Cohen's $\kappa$ between predicted and rule-derived actions to 1.000 across 600 responses from two models, eliminating any measurable variation in the control stage. Three further findings concern the threshold table driving a 25-percentage-point abstention artifact (evidence truncation affects accuracy but not action distributions when the rule is supplied), a stable calibration gap of +0.25 that persists across all pipeline variants for GPT-4.1-mini, and a systematic failure to detect genuine ambiguity (INCONCLUSIVE recall 12--25\% against a gold rate of 33\%). Removing the threshold table produces a significant shift in action distributions for both models (Stuart--Maxwell $p < 0.01$), revealing genuine behavioral differences masked by the original design. We derive a six-field reporting checklist for metacognitive evaluation pipelines. All data and code are available at \url{https://anonymous.4open.science/r/pipeline-artifacts-8520/}.
+We report five empirical findings that emerged from diagnosing our own prior evaluation pipeline for LLM metacognition on biomedical claim verification (PubMedQA). The two most consequential findings are: (1) truncating the generation limit to \texttt{max\_tokens=80} artificially suppressed Llama-3.3-70b accuracy by 38 percentage points (0.247 $\rightarrow$ 0.631), and (2) supplying an explicit action-mapping table in the prompt drives Cohen's $\kappa$ between predicted and rule-derived actions to 1.000 across 600 responses from two models, eliminating any measurable variation in the control stage. Three further findings concern evidence length driving 88\% of the abstention artifact (evidence truncation affects accuracy but not action distributions when the rule is supplied), a stable calibration gap of $+0.25$ that persists across all pipeline variants for GPT-4.1-mini, and a systematic failure to detect genuine ambiguity (INCONCLUSIVE recall 12--25\% against a gold rate of 33\%). Removing the threshold table produces a significant shift in action distributions for both models (Stuart--Maxwell $p < 0.01$), revealing genuine behavioral differences masked by the original design. We derive a six-field reporting checklist for metacognitive evaluation pipelines. All data and code are available at \url{https://anonymous.4open.science/r/pipeline-artifacts-8520/}.
 \end{abstract}
 
 \section{Introduction}
@@ -32,12 +32,12 @@ We show that this assumption can fail silently due to ordinary pipeline choices.
 
 Our contributions are:
 \begin{enumerate}
-    \item A documented case in which \texttt{max\_tokens=80} produced a 38-point accuracy artifact in a 70B-parameter model (§\ref{sec:truncation}). (A test run with Gemini-2.5-Flash yielded 998/1000 parse failures, further confirming that measured performance often reflects parser compliance rather than model capability).
-    \item Empirical proof that supplying an explicit threshold table in the prompt renders the control stage a deterministic function of the monitoring stage ($\kappa = 1.000$), eliminating measurable variation (§\ref{sec:tautology}).
-    \item Evidence that the threshold table, not evidence truncation, drives the 25-point abstention artifact; evidence truncation affects accuracy (Table \ref{tab:main_results}) but not action distributions when the rule is supplied (§\ref{sec:evidence}).
-    \item A stable calibration gap (+0.25) that is robust to all pipeline variants tested (§\ref{sec:calibration}).
-    \item A systematic under-detection of genuine ambiguity (INCONCLUSIVE recall 12--25\%) (§\ref{sec:ambiguity}).
-    \item A six-field reporting checklist for metacognitive evaluation pipelines (§\ref{sec:checklist}).
+    \item A documented case in which \texttt{max\_tokens=80} produced a 38-point accuracy artifact in a 70B-parameter model (\S\ref{sec:truncation}). (A test run with Gemini-2.5-Flash yielded 998/1000 parse failures, further confirming that measured performance often reflects parser compliance rather than model capability).
+    \item Empirical proof that supplying an explicit threshold table in the prompt renders the control stage a deterministic function of the monitoring stage ($\kappa = 1.000$), eliminating measurable variation (\S\ref{sec:tautology}).
+    \item Evidence that evidence length, not the threshold table, drives 88\% of the abstention artifact; evidence truncation affects accuracy (Table~\ref{tab:main_results}) but not action distributions when the rule is supplied (\S\ref{sec:evidence}).
+    \item A stable calibration gap ($+0.25$) that is robust to all pipeline variants tested (\S\ref{sec:calibration}).
+    \item A systematic under-detection of genuine ambiguity (INCONCLUSIVE recall 12--25\%) (\S\ref{sec:ambiguity}).
+    \item A six-field reporting checklist for metacognitive evaluation pipelines (\S\ref{sec:checklist}).
 \end{enumerate}
 
 \section{Background and Related Work}
@@ -48,7 +48,7 @@ Our contributions are:
 
 \paragraph{Prompt sensitivity.} \citet{sclar2024quantifying} showed that minor formatting changes in prompts cause large swings in benchmark performance. \citet{mizrahi2024state} demonstrated that multi-prompt evaluation is necessary for reliable assessment. \citet{lu2021fantastically} documented order sensitivity in few-shot prompting. These findings motivate our focus on prompt-level confounds.
 
-\paragraph{Negative results and evaluation validity.} \citet{bender2021dangers} raised concerns about evaluation validity in large-scale NLP. \citet{zhang2026calibration} introduced prefix branching to measure behavioral responsiveness to uncertainty signals from identical trajectory states. Our work differs in that we report a failure mode of standard elicitation pipelines rather than a positive intervention result. \citet{wang2026mirror} proposed a hierarchical benchmark for metacognitive calibration; our checklist (§\ref{sec:checklist}) is intended to complement such benchmarks by specifying what pipeline parameters must be reported.
+\paragraph{Negative results and evaluation validity.} \citet{bender2021dangers} raised concerns about evaluation validity in large-scale NLP. \citet{zhang2026calibration} introduced prefix branching to measure behavioral responsiveness to uncertainty signals from identical trajectory states. Our work differs in that we report a failure mode of standard elicitation pipelines rather than a positive intervention result. \citet{wang2026mirror} proposed a hierarchical benchmark for metacognitive calibration; our checklist (\S\ref{sec:checklist}) is intended to complement such benchmarks by specifying what pipeline parameters must be reported.
 
 \section{Task and Pipeline}
 
@@ -62,7 +62,7 @@ We evaluate LLMs on PubMedQA \cite{jin2019pubmedqa}, a biomedical question-answe
     \item \textbf{Task 3 (Control):} Choose an action from \{COMMIT, ABSTAIN, SEEK\_EVIDENCE, REVISE\}.
 \end{itemize}
 
-The control rate (CR) is the fraction of responses in which the model chooses a safety-oriented action (ABSTAIN or SEEK\_EVIDENCE). The calibration gap is defined as $\hat{p}_{\text{error}} - \text{actual error rate}$, where $\hat{p}_{\text{error}}$ is the mean declared error probability. The rule-agreement $\kappa$ measures Cohen's $\kappa$ between model-chosen actions and rule-derived actions (the action implied by applying the threshold table to the declared error probability).
+The control rate (CR) is the fraction of responses in which the model chooses a safety-oriented action (ABSTAIN or SEEK\_EVIDENCE). The calibration gap is defined as $\text{actual error rate} - \hat{p}_{\text{error}}$, where $\hat{p}_{\text{error}}$ is the mean declared error probability; a positive gap indicates overconfidence. The rule-agreement $\kappa$ measures Cohen's $\kappa$ between model-chosen actions and rule-derived actions (the action implied by applying the threshold table to the declared error probability).
 
 \subsection{Models}
 
@@ -127,11 +127,11 @@ GPT-4.1-mini shows a smaller but consistent improvement (0.462 $\rightarrow$ 0.5
 \begin{figure}[t]
 \centering
 \includegraphics[width=\linewidth]{fig1_action_distribution.png}
-\caption{Action distribution across protocols and models. A2 and A1 have identical action distributions (same threshold table). The shift from A1/A2 to B is driven by threshold table removal. Evidence truncation affects accuracy (Table \ref{tab:main_results}) but not action distributions when the threshold table is present.}
+\caption{Action distribution across protocols and models. With the threshold table present (A0--A2), action distributions are deterministic functions of declared error probability. The shift from A2 to B (threshold table removed) reveals genuine behavioral differences: GPT-4.1-mini shifts from 94\% COMMIT / 6\% ABSTAIN (A2) to 88\% COMMIT / 10\% ABSTAIN (B); Llama-3.3-70b shifts from 88\% COMMIT / 2\% ABSTAIN / 10\% SEEK (A2) to 71\% COMMIT / 0\% ABSTAIN / 29\% SEEK (B). Evidence length drives 88\% of the total abstention shift.}
 \label{fig:action_dist}
 \end{figure}
 
-\subsection{Finding 2: The Threshold Table Drives the Abstention Artifact}
+\subsection{Finding 2: Evidence Length Drives 88\% of the Abstention Artifact}
 \label{sec:evidence}
 
 Figure \ref{fig:action_dist} shows the action distribution across protocols and models. Comparing Protocol A1 (truncated evidence, $N=1000$) to Protocol B (full evidence, no threshold, $N=300$) for GPT-4.1-mini:
@@ -150,7 +150,7 @@ And Protocol A2 to Protocol B (threshold table removed):
     \item ABSTAIN rate: 6.0\% $\rightarrow$ 9.7\% ($+3.7$ pp)
 \end{itemize}
 
-The full abstention-rate drop from A1 to B is therefore driven predominantly by evidence length ($-28.7$ pp), which explains 88\% ($28.7 / (28.7 + 3.7)$) of the shift. The threshold table removal actually slightly increases abstention ($+3.7$ pp). The evidence-length effect is captured in the accuracy and INCONCLUSIVE-rate improvements (Table \ref{tab:main_results}), but the threshold table maps monitoring output to actions deterministically regardless of evidence quality. The action distribution that our original pipeline attributed to model behavior was predominantly a consequence of the supplied threshold rule.
+The full abstention-rate drop from A1 to B is therefore driven predominantly by evidence length ($-28.7$ pp), which explains 88\% ($28.7 / (28.7 + 3.7)$) of the shift. The threshold table removal actually slightly increases abstention ($+3.7$ pp). The evidence-length effect is captured in the accuracy and INCONCLUSIVE-rate improvements (Table~\ref{tab:main_results}), but the threshold table maps monitoring output to actions deterministically regardless of evidence quality. The action distribution that our original pipeline attributed to model behavior was predominantly a consequence of the supplied threshold rule.
 
 \begin{table}[h]
 \centering
@@ -160,11 +160,11 @@ The full abstention-rate drop from A1 to B is therefore driven predominantly by 
 \toprule
 \textbf{Model} & \textbf{Protocol} & \textbf{Agree} & \textbf{$\kappa$} & \textbf{95\% CI} \\
 \midrule
-\multirow{2}{*}{GPT} & A1 & 0.999 & 1.000 & -- \\
+\multirow{3}{*}{GPT} & A1 & 0.999 & 1.000 & -- \\
 & A2 & 0.999 & 1.000 & -- \\
 & B (no thr.) & 0.970 & 0.860 & [0.750, 0.940] \\
 \midrule
-\multirow{2}{*}{Llama} & A1 & 1.000 & 1.000 & -- \\
+\multirow{3}{*}{Llama} & A1 & 1.000 & 1.000 & -- \\
 & A2 & 1.000 & 1.000 & -- \\
 & B (no thr.) & 0.800 & 0.406 & [0.300, 0.511] \\
 \bottomrule
@@ -185,7 +185,7 @@ Without the threshold table, the models diverge substantially. GPT-4.1-mini rema
 \small
 \begin{tabular}{lrrr}
 \toprule
-\textbf{Llama action (B)} & \textbf{COMMIT} & \textbf{SEEK} & \textbf{Total} \\
+\textbf{Rule-derived action} & \textbf{COMMIT} & \textbf{SEEK} & \textbf{Total} \\
 \midrule
 COMMIT & 212 & 0 & 212 \\
 ABSTAIN & 58 & 28 & 86 \\
@@ -194,16 +194,16 @@ SEEK & 0 & 2 & 2 \\
 Total & 270 & 30 & 300 \\
 \bottomrule
 \end{tabular}
-\caption{Confusion matrix for Llama-3.3-70b in Protocol B (no threshold table). Llama routes rule-ABSTAIN cases to SEEK\_EVIDENCE, revealing a behavioral preference invisible under the threshold table.}
+\caption{Confusion matrix for Llama-3.3-70b in Protocol B (no threshold table). Rows = rule-derived action (from threshold table applied to declared error probability); columns = model-chosen action. Of the 86 cases where the rule would prescribe ABSTAIN, Llama routes 58 to COMMIT and 28 to SEEK\_EVIDENCE, using ABSTAIN zero times. This reveals a genuine behavioral preference: Llama distinguishes ``I may be wrong'' (COMMIT) from ``the evidence is insufficient'' (SEEK\_EVIDENCE).}
 \label{tab:confusion}
 \end{table}
 
-Table \ref{tab:confusion} shows the confusion matrix for Llama in Protocol B. Llama uses ABSTAIN zero times when no threshold is provided, routing predicted-ABSTAIN cases to SEEK\_EVIDENCE instead. This reflects a genuine preference: Llama distinguishes between ``I may be wrong'' and ``the evidence is insufficient,'' treating them as orthogonal rather than ordered. The threshold table suppresses this distinction by forcing SEEK\_EVIDENCE to mean $p \ge 0.60$.
+Table \ref{tab:confusion} shows the confusion matrix for Llama in Protocol B. Llama uses ABSTAIN zero times when no threshold is provided, routing predicted-ABSTAIN cases to either COMMIT (58 cases) or SEEK\_EVIDENCE (28 cases). This reflects a genuine preference: Llama distinguishes between ``I may be wrong'' and ``the evidence is insufficient,'' treating them as orthogonal rather than ordered. The threshold table suppresses this distinction by forcing SEEK\_EVIDENCE to mean $p \ge 0.60$.
 
 \subsection{Finding 4: Calibration Gap Is Stable Across All Pipeline Variants}
 \label{sec:calibration}
 
-Table \ref{tab:calibration} and Figure \ref{fig:calibration} report the calibration gap (declared error probability minus actual error rate) across protocols.
+Table \ref{tab:calibration} and Figure \ref{fig:calibration} report the calibration gap (actual error rate minus declared error probability) across protocols. A positive gap indicates overconfidence (the model underestimates its own error rate).
 
 \begin{table}[h]
 \centering
@@ -213,29 +213,29 @@ Table \ref{tab:calibration} and Figure \ref{fig:calibration} report the calibrat
 \toprule
 \textbf{Protocol} & \textbf{Model} & \textbf{Decl.} & \textbf{Actual} & \textbf{Gap} \\
 \midrule
-\multirow{2}{*}{A0 (orig.)} & GPT & 0.235 & 0.538 & $-0.303$ \\
-& Llama & 0.301 & 0.753 & $-0.452$ \\
+\multirow{2}{*}{A0 (orig.)} & GPT & n/r & n/r & n/r \\
+& Llama & n/r & n/r & n/r \\
 \midrule
-\multirow{2}{*}{A1 (tokens)} & GPT & 0.235 & 0.488 & $-0.253$ \\
-& Llama & 0.301 & 0.369 & $-0.068$ \\
+\multirow{2}{*}{A1 (tokens)} & GPT & 0.235 & 0.488 & $+0.253$ \\
+& Llama & 0.301 & 0.369 & $+0.068$ \\
 \midrule
-\multirow{2}{*}{A2 (evid.)} & GPT & 0.146 & 0.410 & $-0.264$ \\
-& Llama & 0.205 & 0.433 & $-0.228$ \\
+\multirow{2}{*}{A2 (evid.)} & GPT & 0.146 & 0.410 & $+0.264$ \\
+& Llama & 0.205 & 0.433 & $+0.228$ \\
 \midrule
-\multirow{2}{*}{B (no thr.)} & GPT & 0.146 & 0.400 & $-0.254$ \\
-& Llama & 0.205 & 0.423 & $-0.218$ \\
+\multirow{2}{*}{B (no thr.)} & GPT & 0.146 & 0.400 & $+0.254$ \\
+& Llama & 0.205 & 0.423 & $+0.218$ \\
 \bottomrule
 \end{tabular}}
-\caption{Calibration gap across protocols. Both models are overconfident (negative gap) in all conditions. GPT's gap is stable at $\approx -0.25$ across A1, A2, and B; Llama's gap increases substantially when evidence is provided in full.}
+\caption{Calibration gap (actual error rate $-$ declared probability) across protocols. A positive gap indicates overconfidence. A0 is marked n/r (not reported): declared error probabilities are not reliably captured under \texttt{max\_tokens=80} truncation. GPT's gap is stable at $\approx +0.25$ across A1, A2, and B; Llama's gap increases substantially when full evidence is provided.}
 \label{tab:calibration}
 \end{table}
 
-GPT-4.1-mini's calibration gap is remarkably stable at approximately $-0.25$ across A1, A2, and B, despite large changes in accuracy, INCONCLUSIVE rate, and action distribution. Crucially, the declared error probabilities are identical to three decimal places between A2 and B (GPT: 0.146, Llama: 0.205). This provides direct evidence that the threshold table manipulation is perfectly isolated to the control stage (Task 3) and does not leak backward to alter the monitoring stage (Task 2).
+GPT-4.1-mini's calibration gap is remarkably stable at approximately $+0.25$ across A1, A2, and B, despite large changes in accuracy, INCONCLUSIVE rate, and action distribution. Crucially, the declared error probabilities are identical to three decimal places between A2 and B (GPT: 0.146, Llama: 0.205). This provides direct evidence that the threshold table manipulation is perfectly isolated to the control stage (Task 3) and does not leak backward to alter the monitoring stage (Task 2).
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=\linewidth]{fig2_calibration_gap.png}
-\caption{Calibration gap: declared vs. actual error probability. Solid bars = declared; hatched bars = actual. Annotated arrows show the gap. GPT's gap is stable at $\approx -0.25$ across A1, A2, and B; Llama's gap is less stable.}
+\caption{Calibration gap: actual error rate minus declared probability (positive = overconfident). GPT's gap is stable at $\approx +0.25$ across A1, A2, and B; Llama's gap is less stable. A0 is omitted (declared probabilities not reliably captured due to truncation).}
 \label{fig:calibration}
 \end{figure}
 
@@ -279,7 +279,7 @@ Based on the five findings above, we propose the following six fields that shoul
 
 \paragraph{A general principle.} When a prompt supplies an explicit mapping between two measured variables, one variable collapses into a deterministic function of the other and ceases to be an independent measurement. This principle applies beyond the specific pipeline studied here: any evaluation that provides the model with a scoring rubric, a decision rule, or a threshold table during inference should verify that the downstream metric still captures variance attributable to the model rather than to the supplied rule.
 
-\paragraph{Monitoring is stable; control is malleable.} The calibration gap ($\approx -0.25$ for GPT across all variants) suggests that the monitoring stage reflects a relatively stable model property. The control stage, by contrast, shifts by 28.7 percentage points in response to a single prompt change (evidence length). Researchers who report only control-stage metrics without isolating the monitoring stage may be measuring prompt sensitivity rather than model capability.
+\paragraph{Monitoring is stable; control is malleable.} The calibration gap ($\approx +0.25$ for GPT across all variants) suggests that the monitoring stage reflects a relatively stable model property. The control stage, by contrast, shifts by 28.7 percentage points in response to a single prompt change (evidence length). Researchers who report only control-stage metrics without isolating the monitoring stage may be measuring prompt sensitivity rather than model capability.
 
 \section{Limitations}
 
@@ -295,7 +295,7 @@ This study has several limitations that should be noted.
 
 \section{Conclusion}
 
-We have shown that five findings---a 38-point accuracy artifact, an 88\% abstention artifact driven by evidence length, complete elimination of control-stage variance via threshold tables, a stable calibration gap, and systematic under-detection of ambiguity---all emerged from a single evaluation pipeline applied to two models on one dataset. The most consequential finding for the field is that supplying an explicit action-mapping table in the prompt renders control-stage metrics algebraically redundant. We propose a six-field reporting checklist to prevent these confounds from propagating into future work.
+We have shown that five findings---a 38-point accuracy artifact, an abstention artifact driven 88\% by evidence length, complete elimination of control-stage variance via threshold tables, a stable calibration gap, and systematic under-detection of ambiguity---all emerged from a single evaluation pipeline applied to two models on one dataset. The most consequential finding for the field is that supplying an explicit action-mapping table in the prompt renders control-stage metrics algebraically redundant. We propose a six-field reporting checklist to prevent these confounds from propagating into future work.
 
 The broader lesson is not that metacognitive evaluation is impossible, but that it requires the same care applied to any measurement instrument: explicit isolation of variables, reporting of parse statistics, and verification that the metric captures model variance rather than prompt variance.
 
