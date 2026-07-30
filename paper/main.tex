@@ -94,24 +94,24 @@ The A0 $\rightarrow$ A1 comparison isolates the token limit. The A1 $\rightarrow
 \begin{table*}[t]
 \centering
 \small
-\begin{tabular}{llrrrr}
+\begin{tabular}{llrrrrrrr}
 \toprule
-\textbf{Protocol} & \textbf{Model} & \textbf{N} & \textbf{Acc.} & \textbf{INC\%} & \textbf{Baseline} \\
+\textbf{Protocol} & \textbf{Model} & \textbf{N} & \textbf{Acc.} & \textbf{INC\%} & \textbf{Baseline} & \textbf{COMMIT\%} & \textbf{ABSTAIN\%} & \textbf{SEEK\%} \\
 \midrule
-\multirow{2}{*}{A0 (orig.)} & GPT-4.1-mini & 1000 & 0.462 & 47.7\% & 0.552 \\
-& Llama-3.3-70b & 1000 & 0.247 & 78.9\% & 0.552 \\
+\multirow{2}{*}{A0 (orig.)} & GPT-4.1-mini & 1000 & 0.462 & 47.7\% & 0.552 & 52.2\% & 47.7\% & 0.1\% \\
+& Llama-3.3-70b & 1000 & 0.247 & 78.9\% & 0.552 & 21.1\% & 78.9\% & 0.0\% \\
 \midrule
-\multirow{2}{*}{A1 (tokens)} & GPT-4.1-mini & 1000 & 0.512 & 42.1\% & 0.552 \\
-& Llama-3.3-70b & 1000 & 0.631 & 21.2\% & 0.552 \\
+\multirow{2}{*}{A1 (tokens)} & GPT-4.1-mini & 1000 & 0.512 & 42.1\% & 0.552 & 65.1\% & 34.7\% & 0.2\% \\
+& Llama-3.3-70b & 1000 & 0.631 & 21.2\% & 0.552 & 78.7\% & 21.2\% & 0.1\% \\
 \midrule
-\multirow{2}{*}{A2 (evid.)} & GPT-4.1-mini & 300 & 0.590 & 15.0\% & 0.333 \\
-& Llama-3.3-70b & 300 & 0.567 & 10.7\% & 0.333 \\
+\multirow{2}{*}{A2 (evid.)} & GPT-4.1-mini & 300 & 0.590 & 15.0\% & 0.333 & 94.0\% & 6.0\% & 0.0\% \\
+& Llama-3.3-70b & 300 & 0.567 & 10.7\% & 0.333 & 88.0\% & 2.0\% & 10.0\% \\
 \midrule
-\multirow{2}{*}{B (no thr.)} & GPT-4.1-mini & 300 & 0.600 & 14.3\% & 0.333 \\
-& Llama-3.3-70b & 300 & 0.577 & 10.0\% & 0.333 \\
+\multirow{2}{*}{B (no thr.)} & GPT-4.1-mini & 300 & 0.600 & 14.3\% & 0.333 & 88.3\% & 9.7\% & 2.0\% \\
+& Llama-3.3-70b & 300 & 0.577 & 10.0\% & 0.333 & 71.0\% & 0.0\% & 29.0\% \\
 \bottomrule
 \end{tabular}
-\caption{Accuracy, INCONCLUSIVE prediction rate, and majority-class baseline across protocols. A0/A1 use a natural sample ($N=1000$); A2/B use a stratified sample ($N=300$). Parse success was 100\% in all conditions, though A0 Llama parses defaulted to INCONCLUSIVE due to truncation.}
+\caption{Accuracy, INCONCLUSIVE prediction rate, majority-class baseline, and action distribution across protocols. A0/A1 use a natural sample ($N=1000$); A2/B use a stratified sample ($N=300$). The parser returned a value for every response; however, under A0 truncation it returned the INCONCLUSIVE default rather than a parsed decision. We report this as a silent default, not a parse success.}
 \label{tab:main_results}
 \end{table*}
 
@@ -127,11 +127,11 @@ GPT-4.1-mini shows a smaller but consistent improvement (0.462 $\rightarrow$ 0.5
 \begin{figure}[t]
 \centering
 \includegraphics[width=\linewidth]{fig1_action_distribution.png}
-\caption{Action distribution across protocols and models. With the threshold table present (A1--A2), action distributions are deterministic functions of declared error probability. The shift from A2 to B (threshold table removed) reveals genuine behavioral differences: GPT-4.1-mini shifts from 94\% COMMIT / 6\% ABSTAIN (A2) to 88\% COMMIT / 10\% ABSTAIN (B); Llama-3.3-70b shifts from 88\% COMMIT / 2\% ABSTAIN / 10\% SEEK (A2) to 71\% COMMIT / 0\% ABSTAIN / 29\% SEEK (B). Evidence length drives 88\% of the total abstention shift.}
+\caption{Action distribution across protocols and models. With the threshold table present (A1--A2), action distributions are deterministic functions of declared error probability. The shift from A2 to B (threshold table removed) reveals genuine behavioral differences: GPT-4.1-mini shifts from 94\% COMMIT / 6\% ABSTAIN (A2) to 88\% COMMIT / 10\% ABSTAIN (B); Llama-3.3-70b shifts from 88\% COMMIT / 2\% ABSTAIN / 10\% SEEK (A2) to 71\% COMMIT / 0\% ABSTAIN / 29\% SEEK (B). Evidence length and sample composition jointly drive 88\% of the total abstention shift.}
 \label{fig:action_dist}
 \end{figure}
 
-\subsection{Finding 2: Evidence Length Drives 88\% of the Abstention Artifact}
+\subsection{Finding 2: Evidence Length and Sample Composition Drive 88\% of the Abstention Artifact}
 \label{sec:evidence}
 
 Figure \ref{fig:action_dist} shows the action distribution across protocols and models. Comparing Protocol A1 (truncated evidence, $N=1000$) to Protocol B (full evidence, no threshold, $N=300$) for GPT-4.1-mini:
@@ -150,7 +150,7 @@ And Protocol A2 to Protocol B (threshold table removed):
     \item ABSTAIN rate: 6.0\% $\rightarrow$ 9.7\% ($+3.7$ pp)
 \end{itemize}
 
-The full abstention-rate drop from A1 to B is therefore driven predominantly by evidence length ($-28.7$ pp), which explains 88\% ($28.7 / (28.7 + 3.7)$) of the shift. The threshold table removal actually slightly increases abstention ($+3.7$ pp). The evidence-length effect is captured in the accuracy and INCONCLUSIVE-rate improvements (Table~\ref{tab:main_results}), but the threshold table maps monitoring output to actions deterministically regardless of evidence quality. The action distribution that our original pipeline attributed to model behavior was predominantly a consequence of evidence truncation, mediated by the supplied threshold rule: shorter evidence raised declared error probabilities, and the rule mechanically converted those into ABSTAIN.
+The full abstention-rate drop from A1 to B is therefore driven predominantly by the evidence-length and sample-composition change ($-28.7$ pp), which explains 88\% ($28.7 / (28.7 + 3.7)$) of the shift. We cannot separate these two factors, since A1 and A2 differ in both. The threshold table removal actually slightly increases abstention ($+3.7$ pp). The evidence-length effect is captured in the accuracy and INCONCLUSIVE-rate improvements (Table~\ref{tab:main_results}), but the threshold table maps monitoring output to actions deterministically regardless of evidence quality. The action distribution that our original pipeline attributed to model behavior was predominantly a consequence of evidence truncation, mediated by the supplied threshold rule: shorter evidence raised declared error probabilities, and the rule mechanically converted those into ABSTAIN.
 
 \begin{table}[h]
 \centering
@@ -160,8 +160,8 @@ The full abstention-rate drop from A1 to B is therefore driven predominantly by 
 \toprule
 \textbf{Model} & \textbf{Protocol} & \textbf{Agree} & \textbf{$\kappa$} & \textbf{95\% CI} \\
 \midrule
-\multirow{3}{*}{GPT} & A1 & 0.999 & 1.000 & -- \\
-& A2 & 0.999 & 1.000 & -- \\
+\multirow{3}{*}{GPT} & A1 & 0.999 & 0.998 & -- \\
+& A2 & 1.000 & 1.000 & -- \\
 & B (no thr.) & 0.970 & 0.860 & [0.750, 0.940] \\
 \midrule
 \multirow{3}{*}{Llama} & A1 & 1.000 & 1.000 & -- \\
@@ -169,14 +169,14 @@ The full abstention-rate drop from A1 to B is therefore driven predominantly by 
 & B (no thr.) & 0.800 & 0.406 & [0.300, 0.511] \\
 \bottomrule
 \end{tabular}}
-\caption{Rule-agreement between model actions and threshold-derived rule actions. $\kappa = 1.000$ in A1/A2 is exact (zero variance). Bootstrap CIs ($N=10000$) are provided for Protocol B. A Stuart--Maxwell test of marginal homogeneity between A2 and B action distributions is significant for both models ($p < 0.01$).}
+\caption{Rule-agreement between model actions and threshold-derived rule actions. $\kappa = 1.000$ in A2 is exact (perfectly diagonal, zero off-diagonal cases for both models, $n=600$). GPT shows a single deviation in A1 ($\kappa = 0.998$). Bootstrap CIs ($N=10000$) are provided for Protocol B. A Stuart--Maxwell test of marginal homogeneity between A2 and B action distributions is significant for both models ($p < 0.01$; note: Llama uses ABSTAIN zero times in B, producing a zero marginal for that row).}
 \label{tab:kappa}
 \end{table}
 
 \subsection{Finding 3: The Threshold Table Eliminates Measurable Control Variation}
 \label{sec:tautology}
 
-Table \ref{tab:kappa} reports rule-agreement and Cohen's $\kappa$ between model-chosen actions and rule-derived actions. With the threshold table present ($\kappa = 1.000$ for both models in A1 and A2), there is zero variance in the control stage: every model action is a deterministic function of the declared error probability. This means that CR and any delta computed over control actions are not measurements of model behavior---they are algebraic consequences of the monitoring stage output passed through the supplied mapping.
+Table \ref{tab:kappa} reports rule-agreement and Cohen's $\kappa$ between model-chosen actions and rule-derived actions. With the threshold table present ($\kappa = 1.000$ in A2 for both models; $\kappa = 0.998$ for GPT in A1), there is effectively zero variance in the control stage: every model action is a deterministic function of the declared error probability. This means that CR and any delta computed over control actions are not measurements of model behavior---they are algebraic consequences of the monitoring stage output passed through the supplied mapping.
 
 Without the threshold table, the models diverge substantially. GPT-4.1-mini remains largely consistent ($\kappa = 0.860$), while Llama-3.3-70b departs significantly ($\kappa = 0.406$), revealing a genuine behavioral difference that the threshold table had masked. A Stuart--Maxwell test of marginal homogeneity between the A2 and B action distributions confirms the shift is statistically significant for both GPT ($\chi^2 = 79.8, p < 0.001$) and Llama ($\chi^2 = 10.6, p = 0.005$).
 
@@ -279,7 +279,7 @@ Based on the five findings above, we propose the following six fields that shoul
 
 \paragraph{A general principle.} When a prompt supplies an explicit mapping between two measured variables, one variable collapses into a deterministic function of the other and ceases to be an independent measurement. This principle applies beyond the specific pipeline studied here: any evaluation that provides the model with a scoring rubric, a decision rule, or a threshold table during inference should verify that the downstream metric still captures variance attributable to the model rather than to the supplied rule.
 
-\paragraph{Monitoring is stable; control is malleable.} The calibration gap ($\approx +0.25$ for GPT across all variants) suggests that the monitoring stage reflects a relatively stable model property. The control stage, by contrast, shifts by 28.7 percentage points in response to a single prompt change (evidence length). Researchers who report only control-stage metrics without isolating the monitoring stage may be measuring prompt sensitivity rather than model capability.
+\paragraph{Monitoring is stable; control is malleable.} The calibration gap ($\approx +0.25$ for GPT across all variants) suggests that the monitoring stage reflects a relatively stable model property. The control stage, by contrast, shifts by 28.7 percentage points in response to a single preprocessing change (evidence length and sample stratification combined). Researchers who report only control-stage metrics without isolating the monitoring stage may be measuring prompt sensitivity rather than model capability.
 
 \section{Limitations}
 
@@ -295,7 +295,7 @@ This study has several limitations that should be noted.
 
 \section{Conclusion}
 
-We have shown that five findings---a 38-point accuracy artifact, an abstention artifact driven 88\% by evidence length, complete elimination of control-stage variance via threshold tables, a stable calibration gap, and systematic under-detection of ambiguity---all emerged from a single evaluation pipeline applied to two models on one dataset. The most consequential finding for the field is that supplying an explicit action-mapping table in the prompt renders control-stage metrics algebraically redundant. We propose a six-field reporting checklist to prevent these confounds from propagating into future work.
+We have shown that five findings---a 38-point accuracy artifact, an abstention artifact driven 88\% by evidence length and sample composition, complete elimination of control-stage variance via threshold tables, a stable calibration gap, and systematic under-detection of ambiguity---all emerged from a single evaluation pipeline applied to two models on one dataset. The most consequential finding for the field is that supplying an explicit action-mapping table in the prompt renders control-stage metrics algebraically redundant. We propose a six-field reporting checklist to prevent these confounds from propagating into future work.
 
 The broader lesson is not that metacognitive evaluation is impossible, but that it requires the same care applied to any measurement instrument: explicit isolation of variables, reporting of parse statistics, and verification that the metric captures model variance rather than prompt variance.
 
