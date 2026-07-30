@@ -21,7 +21,7 @@
 \maketitle
 
 \begin{abstract}
-We report five empirical findings that emerged from diagnosing our own prior evaluation pipeline for LLM metacognition on biomedical claim verification (PubMedQA). The two most consequential findings are: (1) truncating the generation limit to \texttt{max\_tokens=80} artificially suppressed Llama-3.3-70b accuracy by 38 percentage points (0.247 $\rightarrow$ 0.631), and (2) supplying an explicit action-mapping table in the prompt drives Cohen's $\kappa$ between predicted and rule-derived actions to 1.000 across 600 responses from two models, eliminating any measurable variation in the control stage. Three further findings concern evidence length driving 88\% of the abstention artifact (evidence truncation affects accuracy but not action distributions when the rule is supplied), a stable calibration gap of $+0.25$ that persists across all pipeline variants for GPT-4.1-mini, and a systematic failure to detect genuine ambiguity (INCONCLUSIVE recall 12--25\% against a gold rate of 33\%). Removing the threshold table produces a significant shift in action distributions for both models (Stuart--Maxwell $p < 0.01$), revealing genuine behavioral differences masked by the original design. We derive a six-field reporting checklist for metacognitive evaluation pipelines. All data and code are available at \url{https://anonymous.4open.science/r/pipeline-artifacts-8520/}.
+We report five empirical findings that emerged from diagnosing our own prior evaluation pipeline for LLM metacognition on biomedical claim verification (PubMedQA). The two most consequential findings are: (1) truncating the generation limit to \texttt{max\_tokens=80} artificially suppressed Llama-3.3-70b accuracy by 38 percentage points (0.247 $\rightarrow$ 0.631), and (2) supplying an explicit action-mapping table in the prompt drives Cohen's $\kappa$ between predicted and rule-derived actions to 1.000 across 600 responses from two models, eliminating any measurable variation in the control stage. Three further findings concern evidence length and sample composition driving 88\% of the abstention artifact, a stable calibration gap of $+0.25$ that persists across all pipeline variants for GPT-4.1-mini, and a systematic failure to detect genuine ambiguity (INCONCLUSIVE recall 12--25\% against a gold rate of 33\%). Removing the threshold table produces a significant shift in action distributions for both models (Stuart--Maxwell $p < 0.01$), revealing genuine behavioral differences masked by the original design. We derive a six-field reporting checklist for metacognitive evaluation pipelines. All data and code are available at \url{https://anonymous.4open.science/r/pipeline-artifacts-8520/}.
 \end{abstract}
 
 \section{Introduction}
@@ -34,7 +34,7 @@ Our contributions are:
 \begin{enumerate}
     \item A documented case in which \texttt{max\_tokens=80} produced a 38-point accuracy artifact in a 70B-parameter model (\S\ref{sec:truncation}). (A test run with Gemini-2.5-Flash yielded 998/1000 parse failures, further confirming that measured performance often reflects parser compliance rather than model capability).
     \item Empirical proof that supplying an explicit threshold table in the prompt renders the control stage a deterministic function of the monitoring stage ($\kappa = 1.000$), eliminating measurable variation (\S\ref{sec:tautology}).
-    \item Evidence that evidence length, not the threshold table, drives 88\% of the abstention artifact; evidence truncation affects accuracy (Table~\ref{tab:main_results}) but not action distributions when the rule is supplied (\S\ref{sec:evidence}).
+    \item Evidence that evidence length and sample composition, not the threshold table, drive 88\% of the abstention shift; threshold-table removal accounts for only $+3.7$ pp (\S\ref{sec:evidence}).
     \item A stable calibration gap ($+0.25$) that is robust to all pipeline variants tested (\S\ref{sec:calibration}).
     \item A systematic under-detection of genuine ambiguity (INCONCLUSIVE recall 12--25\%) (\S\ref{sec:ambiguity}).
     \item A six-field reporting checklist for metacognitive evaluation pipelines (\S\ref{sec:checklist}).
@@ -122,12 +122,12 @@ The A0 $\rightarrow$ A1 comparison isolates the token limit. The A1 $\rightarrow
 
 Table \ref{tab:main_results} reports accuracy and parse statistics across protocols. Llama-3.3-70b accuracy rises from 0.247 (Protocol A0) to 0.631 (Protocol A1), a difference of 38.4 percentage points. The mechanism is straightforward: at \texttt{max\_tokens=80}, Llama frequently begins responses with a reasoning preamble before stating DECISION:, causing truncation before the parseable content. The parser then returns the default label INCONCLUSIVE, inflating that class to 78.9\% in A0. This is a silent default assignment, not a measured parse failure (the parser successfully returned a result, but the result was an artifact of truncation).
 
-GPT-4.1-mini shows a smaller but consistent improvement (0.462 $\rightarrow$ 0.512), suggesting it more reliably front-loads the structured output. In A1, both models perform comparably to the majority-class baseline (0.552) for the natural sample.
+GPT-4.1-mini shows a smaller but consistent improvement (0.462 $\rightarrow$ 0.512), suggesting it more reliably front-loads the structured output. In A1, GPT-4.1-mini (0.512) remains below the majority-class baseline (0.552) while Llama-3.3-70b (0.631) exceeds it.
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=\linewidth]{fig1_action_distribution.png}
-\caption{Action distribution across protocols and models. With the threshold table present (A0--A2), action distributions are deterministic functions of declared error probability. The shift from A2 to B (threshold table removed) reveals genuine behavioral differences: GPT-4.1-mini shifts from 94\% COMMIT / 6\% ABSTAIN (A2) to 88\% COMMIT / 10\% ABSTAIN (B); Llama-3.3-70b shifts from 88\% COMMIT / 2\% ABSTAIN / 10\% SEEK (A2) to 71\% COMMIT / 0\% ABSTAIN / 29\% SEEK (B). Evidence length drives 88\% of the total abstention shift.}
+\caption{Action distribution across protocols and models. With the threshold table present (A1--A2), action distributions are deterministic functions of declared error probability. The shift from A2 to B (threshold table removed) reveals genuine behavioral differences: GPT-4.1-mini shifts from 94\% COMMIT / 6\% ABSTAIN (A2) to 88\% COMMIT / 10\% ABSTAIN (B); Llama-3.3-70b shifts from 88\% COMMIT / 2\% ABSTAIN / 10\% SEEK (A2) to 71\% COMMIT / 0\% ABSTAIN / 29\% SEEK (B). Evidence length drives 88\% of the total abstention shift.}
 \label{fig:action_dist}
 \end{figure}
 
@@ -150,7 +150,7 @@ And Protocol A2 to Protocol B (threshold table removed):
     \item ABSTAIN rate: 6.0\% $\rightarrow$ 9.7\% ($+3.7$ pp)
 \end{itemize}
 
-The full abstention-rate drop from A1 to B is therefore driven predominantly by evidence length ($-28.7$ pp), which explains 88\% ($28.7 / (28.7 + 3.7)$) of the shift. The threshold table removal actually slightly increases abstention ($+3.7$ pp). The evidence-length effect is captured in the accuracy and INCONCLUSIVE-rate improvements (Table~\ref{tab:main_results}), but the threshold table maps monitoring output to actions deterministically regardless of evidence quality. The action distribution that our original pipeline attributed to model behavior was predominantly a consequence of the supplied threshold rule.
+The full abstention-rate drop from A1 to B is therefore driven predominantly by evidence length ($-28.7$ pp), which explains 88\% ($28.7 / (28.7 + 3.7)$) of the shift. The threshold table removal actually slightly increases abstention ($+3.7$ pp). The evidence-length effect is captured in the accuracy and INCONCLUSIVE-rate improvements (Table~\ref{tab:main_results}), but the threshold table maps monitoring output to actions deterministically regardless of evidence quality. The action distribution that our original pipeline attributed to model behavior was predominantly a consequence of evidence truncation, mediated by the supplied threshold rule: shorter evidence raised declared error probabilities, and the rule mechanically converted those into ABSTAIN.
 
 \begin{table}[h]
 \centering
@@ -187,18 +187,18 @@ Without the threshold table, the models diverge substantially. GPT-4.1-mini rema
 \toprule
 \textbf{Rule-derived action} & \textbf{COMMIT} & \textbf{SEEK} & \textbf{Total} \\
 \midrule
-COMMIT & 212 & 0 & 212 \\
-ABSTAIN & 58 & 28 & 86 \\
-SEEK & 0 & 2 & 2 \\
+COMMIT         & 212 & 58 & 270 \\
+ABSTAIN        &   0 &  2 &   2 \\
+SEEK\_EVIDENCE &   0 & 28 &  28 \\
 \midrule
-Total & 270 & 30 & 300 \\
+Total          & 212 & 88 & 300 \\
 \bottomrule
 \end{tabular}
-\caption{Confusion matrix for Llama-3.3-70b in Protocol B (no threshold table). Rows = rule-derived action (from threshold table applied to declared error probability); columns = model-chosen action. Of the 86 cases where the rule would prescribe ABSTAIN, Llama routes 58 to COMMIT and 28 to SEEK\_EVIDENCE, using ABSTAIN zero times. This reveals a genuine behavioral preference: Llama distinguishes ``I may be wrong'' (COMMIT) from ``the evidence is insufficient'' (SEEK\_EVIDENCE).}
+\caption{Confusion matrix for Llama-3.3-70b in Protocol B (no threshold table). Rows = rule-derived action; columns = model-chosen action. Of the 270 cases where the rule prescribes COMMIT (declared error probability below 0.30), Llama selects SEEK\_EVIDENCE in 58---requesting additional evidence while judging itself unlikely to be wrong. It selects ABSTAIN zero times.}
 \label{tab:confusion}
 \end{table}
 
-Table \ref{tab:confusion} shows the confusion matrix for Llama in Protocol B. Llama uses ABSTAIN zero times when no threshold is provided, routing predicted-ABSTAIN cases to either COMMIT (58 cases) or SEEK\_EVIDENCE (28 cases). This reflects a genuine preference: Llama distinguishes between ``I may be wrong'' and ``the evidence is insufficient,'' treating them as orthogonal rather than ordered. The threshold table suppresses this distinction by forcing SEEK\_EVIDENCE to mean $p \ge 0.60$.
+Table \ref{tab:confusion} shows the confusion matrix for Llama in Protocol B. Of the 270 cases in which the rule would prescribe COMMIT, Llama selects SEEK\_EVIDENCE in 58; it selects ABSTAIN zero times. This reveals a genuine behavioral preference: Llama treats ``I may be wrong'' and ``this evidence is insufficient'' as orthogonal, whereas the threshold table orders them by defining SEEK\_EVIDENCE as $p \ge 0.60$.
 
 \subsection{Finding 4: Calibration Gap Is Stable Across All Pipeline Variants}
 \label{sec:calibration}
@@ -242,7 +242,7 @@ GPT-4.1-mini's calibration gap is remarkably stable at approximately $+0.25$ acr
 \subsection{Finding 5: Models Systematically Under-Detect Genuine Ambiguity}
 \label{sec:ambiguity}
 
-In the stratified sample (gold INCONCLUSIVE rate = 33.3\%), both models substantially under-predict the INCONCLUSIVE class (Table \ref{tab:inconclusive}). Both models miss 75--88\% of cases that expert annotators judged to be genuinely inconclusive. This is the opposite of the over-hedging narrative suggested by Protocol A0 (where INCONCLUSIVE rates of 42--79\% appeared): that apparent over-hedging was an artifact of evidence truncation causing parse defaults. With full evidence and correct parsing, both models are under-hedging---committing to definitive answers on evidence that experts found ambiguous. In a clinical decision-support context, this is a safety-relevant finding.
+In the stratified sample (gold INCONCLUSIVE rate = 33.3\%), both models substantially under-predict the INCONCLUSIVE class (Table \ref{tab:inconclusive}). Both models miss 75--88\% of cases that expert annotators judged to be genuinely inconclusive. This is the opposite of the over-hedging narrative suggested by Protocol A0 (where INCONCLUSIVE rates of 48--79\% appeared): that apparent over-hedging was an artifact of evidence truncation causing parse defaults. With full evidence and correct parsing, both models are under-hedging---committing to definitive answers on evidence that experts found ambiguous. In a clinical decision-support context, this is a safety-relevant finding.
 
 \begin{table}[h]
 \centering
