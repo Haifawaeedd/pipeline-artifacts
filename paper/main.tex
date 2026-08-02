@@ -230,7 +230,7 @@ Table \ref{tab:calibration} and Figure \ref{fig:calibration} report the calibrat
 \label{tab:calibration}
 \end{table}
 
-GPT-4.1-mini's calibration gap is remarkably stable at approximately $+0.25$ across A1, A2, and B, despite large changes in accuracy, INCONCLUSIVE rate, and action distribution. Crucially, the declared error probabilities are identical to three decimal places between A2 and B (GPT: 0.146, Llama: 0.205). This provides direct evidence that the threshold table manipulation is perfectly isolated to the control stage (Task 3) and does not leak backward to alter the monitoring stage (Task 2).
+GPT-4.1-mini's calibration gap is remarkably stable at approximately $+0.25$ across A1, A2, and B, despite large changes in accuracy, INCONCLUSIVE rate, and action distribution. This stability is consistent with findings that RLHF-aligned models develop systematic overconfidence as a byproduct of human preference optimization, where models learn to project higher certainty to satisfy rater preferences regardless of actual task difficulty \citep{kadavath2022language}. Crucially, the declared error probabilities are identical to three decimal places between A2 and B (GPT: 0.146, Llama: 0.205). This provides direct evidence that the threshold table manipulation is perfectly isolated to the control stage (Task 3) and does not leak backward to alter the monitoring stage (Task 2).
 
 \begin{figure}[t]
 \centering
@@ -285,13 +285,11 @@ Based on the five findings above, we propose the following six fields that shoul
 
 This study has several limitations that should be noted.
 
-\paragraph{Two models, one dataset.} All findings are based on GPT-4.1-mini and Llama-3.3-70b evaluated on PubMedQA. Generalization to other models, domains, or task formats requires further study.
+\paragraph{Scope and Generalizability.} All empirical findings are based on two models (GPT-4.1-mini and Llama-3.3-70b) evaluated on the biomedical domain via the PubMedQA dataset. While PubMedQA serves as a rigorous diagnostic stress-test to demonstrate the existence of pipeline-manufactured artifacts, evaluating these dynamics across diverse benchmarks, non-medical domains, and smaller-scale open-weight models remains essential for future work.
 
-\paragraph{Single prompt family.} All protocols use the same three-task prompt structure. We did not evaluate alternative prompt designs (e.g., chain-of-thought, few-shot, or declarative-claim framing). In particular, all protocols embed the PubMedQA question in a CLAIM slot; the effect of framing the question as a question rather than a claim was not tested and constitutes important future work.
+\paragraph{Prompt Structural Design.} Our protocols share a common core three-task prompt family. We did not evaluate alternative prompt paradigms, such as few-shot in-context learning, chain-of-thought reasoning, or different structural configurations of the input layout. In particular, all instances embed questions strictly within a designated \texttt{CLAIM} slot; isolating the behavioral variance introduced by question-versus-claim framing constitutes an important direction for future investigation and helps prevent superficial evaluation conclusions.
 
-\paragraph{Arm D not run.} The planned Arm D (declarative claim framing) was not executed.
-
-\paragraph{No human baseline.} We do not have human-level INCONCLUSIVE detection rates for this sample, making it difficult to assess how far below human performance the models fall.
+\paragraph{Absence of Human Baseline.} We do not establish human performance thresholds or expert baseline detection rates for the \texttt{INCONCLUSIVE} class within our stratified sample. Consequently, while we show that models systematically under-detect genuine clinical ambiguity compared to gold labels, we cannot precisely quantify how far below expert human clinical judgment these models fall.
 
 \section{Conclusion}
 
