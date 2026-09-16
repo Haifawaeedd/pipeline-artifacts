@@ -13,7 +13,7 @@ During the ARR author-response audit, we identified that the historical A2/B Stu
 
 A new **fixed-ID matched re-evaluation** was subsequently conducted on 1,000 PubMedQA items per condition and model. It uses the same 1,000 item IDs, labels, and order across four controlled conditions (C0–C3), retains item identifiers and item-level monitoring/action outputs, and is analyzed separately from the historical A0/A1/A2/B artifacts. The new study is a re-evaluation corresponding to the original intervention questions; it is **not a relabeling or replacement of the historical runs**.
 
-The matched C0–C3 item-level artifacts and deterministic analysis code are being prepared as a separately versioned reproducibility package. Until those files are present here, claims requiring item-level pairing should not be reproduced from the historical `data/` directory.
+The eight item-level C0–C3 result files are available under `data/matched_n1000/`. Each file contains 1,000 records and includes `pubmed_id`, `gold_label`, `decision`, `error_prob`, `action`, parsing status, correctness, prompt/evidence metadata, and raw model output. Claims requiring item-level pairing should use this matched directory rather than the historical `data/` files.
 
 ---
 
@@ -42,7 +42,16 @@ data/
 ├── protocol_A2_GPT.csv
 ├── protocol_A2_Llama.csv
 ├── protocol_B_GPT.csv
-└── protocol_B_Llama.csv
+├── protocol_B_Llama.csv
+└── matched_n1000/
+    ├── full_C0_gpt.csv
+    ├── full_C0_llama.csv
+    ├── full_C1_gpt.csv
+    ├── full_C1_llama.csv
+    ├── full_C2_gpt.csv
+    ├── full_C2_llama.csv
+    ├── full_C3_gpt.csv
+    └── full_C3_llama.csv
 README.md
 ```
 
